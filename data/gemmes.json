@@ -1,0 +1,58 @@
+{
+  "gemmes": [
+    {
+      "id": "peridot",
+      "nom": "Péridot",
+      "lieu": "Île de Zabargad",
+      "accroche": "Le gisement le plus important de l’Antiquité, aujourd’hui abandonné.",
+      "texte": "Aujourd’hui abandonné, le gisement de péridot de l’île de Zabargad dans la mer Rouge était le plus important de l’Antiquité.",
+      "ancre": "ancre-peridot",
+      "texture": "peridot-ok.jpg"
+    },
+    {
+      "id": "turquoise",
+      "nom": "Turquoise",
+      "lieu": "Région du Sinaï",
+      "accroche": "Le Sinaï tire son nom égyptien de la turquoise, si abondante ici.",
+      "texte": "Le nom égyptien du Sinaï était Mafkat (mfkt), signifiant « turquoise ». Ces pierres y étaient si abondantes qu’elles furent à l’origine de son nom !",
+      "ancre": "ancre-turquoise",
+      "texture": "turquoise-ok.jpg"
+    },
+    {
+      "id": "amethyste",
+      "nom": "Améthyste",
+      "lieu": "Wadi El Hudi",
+      "accroche": "Une gemme célèbre, pourtant semi-précieuse, de la famille des quartz.",
+      "texte": "Bien qu’il s’agisse de l’une des gemmes les plus connues, l’améthyste est en réalité une pierre « semi-précieuse », faisant partie de la famille des quartz.",
+      "ancre": "ancre-amethyste",
+      "texture": "amethyste-ok.jpg"
+    },
+    {
+      "id": "malachite",
+      "nom": "Malachite",
+      "lieu": "Région du Sinaï",
+      "accroche": "Un minéral de cuivre, extrait ici dans le Sinaï.",
+      "texte": "La malachite est un minéral formé par l’interaction de minéraux de cuivre avec des eaux riches en carbonates. Région riche en minerai de cuivre, c’est dans le Sinaï qu’elle est extraite.",
+      "ancre": "ancre-malachite",
+      "texture": "malachite-ok.jpg"
+    },
+    {
+      "id": "cornaline",
+      "nom": "Cornaline",
+      "lieu": "Jabal al-‘Aşr",
+      "accroche": "Une variété de calcédoine aux reflets flamboyants.",
+      "texte": "La couleur flamboyante des cornalines n’est-elle pas fascinante ? Il s’agit d’une variété de calcédoine, minéral laiteux aux diverses variations colorées.",
+      "ancre": "ancre-cornaline",
+      "texture": "cornaline-ok.jpg"
+    },
+    {
+      "id": "calcedoine",
+      "nom": "Calcédoine",
+      "lieu": "",
+      "accroche": "Son bleu pâle vient de la diffusion de la lumière dans la pierre.",
+      "texte": "L’effet Tyndall est à l’origine de la jolie couleur de la calcédoine : la lumière se diffuse sur de minuscules particules piégées à l’intérieur de la pierre.",
+      "ancre": "ancre-calcedoine",
+      "texture": "calcedoine-ok.jpg"
+    }
+  ]
+}
