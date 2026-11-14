@@ -29,13 +29,13 @@ function separerPierres(items) {
 const KM_CAIRE_ASSOUAN = 682;
 
 const VILLES = {
-  'ancre-ville-le-caire': 'Le Caire',
-  'ancre-ville-giza': 'Giza',
-  'ancre-ville-assouan': 'Assouan',
-  'ancre-ville-louxor': 'Louxor',
-  'ancre-ville-el-kharga': 'El Kharga',
-  'ancre-ville-minieh': 'Minieh',
-  'ancre-ville-medinet-el-fayoum': 'El Fayoum'
+  'ancre-ville-le-caire': { nom: 'Le Caire', cote: 'droite' },
+  'ancre-ville-giza': { nom: 'Giza', cote: 'gauche' },
+  'ancre-ville-assouan': { nom: 'Assouan', cote: 'droite' },
+  'ancre-ville-louxor': { nom: 'Louxor', cote: 'droite' },
+  'ancre-ville-el-kharga': { nom: 'El Kharga', cote: 'gauche' },
+  'ancre-ville-minieh': { nom: 'Minieh', cote: 'gauche' },
+  'ancre-ville-medinet-el-fayoum': { nom: 'El Fayoum', cote: 'gauche' }
 };
 
 // Dernier type de pointeur utilisé : 'mouse', 'touch' ou 'pen'
@@ -129,15 +129,25 @@ const Carte = {
     if (pa && pb) this.kmParUnite = KM_CAIRE_ASSOUAN / Math.hypot(pb.x - pa.x, pb.y - pa.y);
 
     // Étiquettes des villes
-    Object.entries(VILLES).forEach(([id, nom]) => {
+    Object.entries(VILLES).forEach(([id, v]) => {
       const p = ancres[id];
       if (!p) return;
+      // point jaune clair sur l'ancre
+      const point = document.createElementNS(NS, 'circle');
+      point.setAttribute('cx', p.x);
+      point.setAttribute('cy', p.y);
+      point.setAttribute('r', 3.5);
+      point.setAttribute('fill', '#F6F2D4');
+      svg.appendChild(point);
+      // nom à côté du point, à droite ou à gauche
+      const droite = v.cote === 'droite';
       const t = document.createElementNS(NS, 'text');
-      t.setAttribute('x', p.x + 16);
-      t.setAttribute('y', p.y + 8);
+      t.setAttribute('x', p.x + (droite ? 12 : -12));
+      t.setAttribute('y', p.y + 7);
+      t.setAttribute('text-anchor', droite ? 'start' : 'end');
       t.setAttribute('class', 'ville');
       t.setAttribute('fill', '#745447');
-      t.textContent = nom;
+      t.textContent = v.nom;
       svg.appendChild(t);
       this.labels.push(t);
     });
@@ -147,6 +157,7 @@ const Carte = {
     const items = [];
     for (const g of donnees) {
       const a = ancres['ancre-' + g.id];
+      if (g.sur_carte === false) continue;             // pierre absente de la carte
       if (!a) { console.warn('Pas d’ancre pour', g.id); continue; }
       const dx = (g.decalage && g.decalage.dx) || 0;
       const dy = (g.decalage && g.decalage.dy) || 0;

@@ -27,17 +27,17 @@ const Reglette = {
     const C = this.COULEUR;
     let s = `<svg width="${L + 2 * pad}" height="${H}" viewBox="0 0 ${L + 2 * pad} ${H}" fill="none">`;
     // base horizontale
-    s += `<path d="M${pad} ${y0} L${pad + L} ${y0}" stroke="${C}" stroke-width="4"/>`;
+    s += `<path d="M${pad} ${y0} L${pad + L} ${y0}" stroke="${C}" stroke-width="2"/>`;
     // graduations : 4 divisions, grandes aux extrémités et au milieu
     for (let i = 0; i <= 4; i++) {
       const x = pad + (L * i) / 4;
       const grande = i % 2 === 0;
       const h = grande ? 48 : 28;
-      s += `<path d="M${x} ${y0} L${x} ${y0 - h}" stroke="${C}" stroke-width="4" stroke-linecap="square"/>`;
+      s += `<path d="M${x} ${y0} L${x} ${y0 - h}" stroke="${C}" stroke-width="2" stroke-linecap="square"/>`;
     }
     // libellés en Julius
     const T = this.TEXTE;
-    const lab = (x, t) => `<text x="${x}" y="${y0 - 56 + 14}" fill="${T}" font-size="13" text-anchor="middle">${t}</text>`;
+    const lab = (x, t) => `<text x="${x}" y="${y0 - 56 + 14}" fill="${T}" font-size="14" stroke="${T}" stroke-width="0.4" text-anchor="middle">${t}</text>`;
     s += lab(pad, '0') + lab(pad + L / 2, km / 2) + lab(pad + L, km + ' km');
     s += '</svg>';
     el.innerHTML = s;

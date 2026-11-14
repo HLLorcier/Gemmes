@@ -84,10 +84,11 @@ text.ville {
 #cisailles {
   position: absolute; right: 6%; bottom: 5%;
   width: 6%; min-width: 28px; aspect-ratio: 105 / 47;
-  background: var(--texte); border: 0; padding: 0; cursor: pointer;
-  -webkit-mask: url('../assets/svg/cisailles.svg') center / contain no-repeat;
-          mask: url('../assets/svg/cisailles.svg') center / contain no-repeat;
+  background: none; border: 0; padding: 0; cursor: pointer;
+  color: var(--texte);
 }
+#cisailles svg { display: block; width: 100%; height: 100%; }
+#cisailles:hover { color: #D2E7D1; }
 
 
 /* Mobile : colonnes empilées */
@@ -102,3 +103,11 @@ text.ville {
 /* Réglette en km, couleur menthe */
 #reglette { position: absolute; left: 6%; bottom: 4%; z-index: 3; pointer-events: none; display: block; }
 #reglette text { font-family: 'Julius Sans One', serif; }
+
+/* Icônes de zoom : sans contour, marron, vert menthe au survol */
+.zoom { position: absolute; right: 24px; top: 24px; display: flex; flex-direction: column; gap: 14px; z-index: 4; }
+.zoom button {
+  background: none; border: 0; padding: 0; font: inherit; font-size: 26px;
+  color: var(--texte); cursor: pointer; line-height: 1;
+}
+.zoom button:hover { color: #D2E7D1; }
