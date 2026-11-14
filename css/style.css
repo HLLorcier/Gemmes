@@ -30,7 +30,7 @@ body {
   width: 100vw;
   height: 100vh;
   display: grid;
-  grid-template-columns: 60% 40%;
+  grid-template-columns: 66.6667% 33.3333%;
 }
 
 #gauche { background: var(--jaune); position: relative; overflow: hidden; }
@@ -77,35 +77,17 @@ text.ville {
 .bulle-texte { margin: 0; font-size: 12px; line-height: 1.5; }
 
 /* Fiche détaillée : hiérarchie par taille */
-.fiche {
-  position: absolute;
-  right: 4%;
-  bottom: 6%;
-  width: min(340px, 40%);
-  background: var(--fiche);
-  border-radius: 16px;
-  padding: 22px 24px;
-  box-shadow: 0 8px 24px rgba(116, 84, 71, .2);
-  z-index: 6;
-}
-.fiche-nom { margin: 0 0 6px; font-weight: 400; font-size: clamp(20px, 2.4vw, 32px); }
-.fiche-lieu { margin: 0 0 12px; font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
-.fiche-texte { margin: 0; font-size: clamp(13px, 1.2vw, 16px); line-height: 1.6; }
-.fiche-fermer {
-  position: absolute; top: 6px; right: 10px;
-  background: none; border: 0; font: inherit; font-size: 20px;
-  color: var(--texte); cursor: pointer;
-}
 
 /* Collier et cisailles */
 #collier-zone { position: absolute; inset: 0; }
 #collier { width: 100%; height: 100%; display: block; }
 #cisailles {
   position: absolute; right: 6%; bottom: 5%;
-  width: 6%; min-width: 32px;
-  background: none; border: 0; padding: 0; cursor: pointer;
+  width: 6%; min-width: 28px; aspect-ratio: 105 / 47;
+  background: var(--texte); border: 0; padding: 0; cursor: pointer;
+  -webkit-mask: url('../assets/svg/cisailles.svg') center / contain no-repeat;
+          mask: url('../assets/svg/cisailles.svg') center / contain no-repeat;
 }
-#cisailles img { width: 100%; display: block; }
 
 
 /* Mobile : colonnes empilées */
@@ -115,17 +97,7 @@ text.ville {
   .titre { top: 4%; }
   #carte { top: 14%; bottom: 4%; }
   #cisailles { width: 12%; }
-  .fiche { width: calc(100% - 24px); right: 12px; bottom: 12px; }
-}
-
-/* Zoom */
-.zoom { position: absolute; right: 24px; top: 24px; display: flex; flex-direction: column; gap: 6px; z-index: 4; }
-.zoom button, .muet {
-  font: inherit; color: var(--texte); background: var(--fiche);
-  border: 1px solid rgba(116, 84, 71, .35); border-radius: 8px;
-  width: 34px; height: 34px; cursor: pointer; font-size: 16px;
-}
-.muet { position: absolute; right: 24px; top: 150px; width: auto; height: auto; padding: 6px 12px; font-size: 12px; letter-spacing: .15em; z-index: 4; }
+  
 
 /* Réglette en km, couleur menthe */
 #reglette { position: absolute; left: 6%; bottom: 4%; z-index: 3; pointer-events: none; display: block; }

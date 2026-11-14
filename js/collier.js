@@ -1,5 +1,6 @@
 const NS_COLLIER = 'http://www.w3.org/2000/svg';
 
+// Les perles s'alignent dans l'ordre d'ajout, de gauche à droite le long du fil.
 const Collier = {
   svg: null,
   zone: null,
@@ -25,7 +26,6 @@ const Collier = {
     this.dessiner();
   },
 
-  // Recalcule le fil en U selon la taille réelle de la zone
   dessiner() {
     const w = this.zone.clientWidth;
     const h = this.zone.clientHeight;
@@ -36,34 +36,33 @@ const Collier = {
     const bas = h * 0.8;
     const R = Math.min(w * 0.3, (bas - top) / 2);
     const cx = w / 2;
-    const cy = bas - R;               // centre du demi-cercle du fond
+    const cy = bas - R;
     const xl = cx - R, xr = cx + R;
-    const Lh = cy - top;              // longueur d'un bras
+    const Lh = cy - top;
+    const neck = Math.min(w, h) * 0.09;
     this.geo = {
-      top, cy, xl, xr, R, Lh,
+      w, h, top, cy, xl, xr, R, Lh,
       Ltot: 2 * Lh + Math.PI * R,
-      sCentre: Lh + Math.PI * R / 2,  // position du fond du U le long du fil
-      neck: Math.min(w, h) * 0.09     // taille d'une perle
+      neck,
+      gap: neck * 1.05
     };
 
     this.chemin.setAttribute('d',
       `M${xl} ${top} L${xl} ${cy} A${R} ${R} 0 0 0 ${xr} ${cy} L${xr} ${top}`);
 
-    this.items.forEach(it => { it.s = this.sFor(it.cote, it.index); this.placer(it); });
+    this.items.forEach(it => { it.s = this.sPour(it.index); this.placer(it); });
   },
 
-  // Position le long du fil pour une perle (côté gauche ou droit, rang i)
-  sFor(cote, i) {
-    const g = this.geo;
-    const off = g.neck * 0.7 + i * g.neck * 1.05;
-    const s = cote === 'droite' ? g.sCentre + off : g.sCentre - off;
-    return Math.max(g.neck / 2, Math.min(g.Ltot - g.neck / 2, s));
+  // Position le long du fil pour le rang i
+  sPour(i) {
+    return this.geo.neck * 0.5 + i * this.geo.gap;
   },
 
-  // s < 0 : au-dessus du haut du collier, hors écran
+  // s < 0 : au-dessus du bras gauche ; s > Ltot : au-dessus du bras droit (hors écran)
   pointAt(s) {
     const g = this.geo;
     if (s < 0) return { x: g.xl, y: g.top + s };
+    if (s > g.Ltot) return { x: g.xr, y: g.top - (s - g.Ltot) };
     return this.chemin.getPointAtLength(s);
   },
 
@@ -77,33 +76,32 @@ const Collier = {
       `translate(${p.x} ${p.y}) scale(${k}) translate(${-c.x} ${-c.y})`);
   },
 
-  // Ajoute une gemme : elle glisse depuis le fond vers son emplacement
+  // Ajoute une pierre (forme taillée, survol morphé) : elle descend du haut du bras droit
   ajouter(g) {
     if (!this.geo) return false;
-    if (this.items.some(it => it.g.id === g.id)) return false;
-
-    const cote = Carte.estAGauche(g) ? 'gauche' : 'droite';
-    const index = this.items.filter(it => it.cote === cote).length;
+    const index = this.items.length;
+    if (this.sPour(index) > this.geo.Ltot - this.geo.neck * 0.5) {
+      console.info('Collier plein');
+      return false;
+    }
 
     const el = document.createElementNS(NS_COLLIER, 'path');
-    // forme finale : survol morphé (ou agrandissement pour les pierres 'echelle')
     el.setAttribute('d', g.echelle ? g.dStill : g.interp(1));
     el.setAttribute('fill', `url(#tex-${g.id})`);
     this.groupe.appendChild(el);
 
-    const depart = -this.geo.top - this.geo.neck * 2; // hors champ, au-dessus
-    const it = { g, cote, index, el, s: depart };
+    const it = { g, index, el, s: this.geo.Ltot + this.geo.neck * 2 };
     this.items.push(it);
     this.placer(it);
 
     Sons.jouer('chaine');
-    tween(it, depart, this.sFor(cote, index), 1600,
+    tween(it, it.s, this.sPour(index), 1400,
       v => { it.s = v; this.placer(it); },
       () => Sons.jouer('tintement'));
     return true;
   },
 
-  // Cisailles : la chaîne se brise, les perles disparaissent en fondu
+  // Cisailles : le fil se brise, les pierres disparaissent en fondu
   reinitialiser() {
     Sons.jouer('ciseau');
     tween(this, 1, 0.25, 200,

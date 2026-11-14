@@ -3,6 +3,7 @@
 // et echelle-vertical-haut (grande graduation) : traits de 4 px, carrés aux extrémités.
 const Reglette = {
   COULEUR: '#D2E7D1',
+  TEXTE: '#745447',
   CHOIX_KM: [2, 5, 10, 20, 50, 100, 200, 500],
   LONGUEUR_CIBLE: 200,   // px environ
 
@@ -14,6 +15,7 @@ const Reglette = {
     const r = svg.getBoundingClientRect();
     const v = Carte.vue;
     const pxParUnite = Math.min(r.width / v.w, r.height / v.h);
+    if (!isFinite(pxParUnite) || pxParUnite <= 0) return;
     const pxParKm = pxParUnite / Carte.kmParUnite;
 
     // plus grande valeur ronde dont la longueur reste sous la cible
@@ -34,7 +36,8 @@ const Reglette = {
       s += `<path d="M${x} ${y0} L${x} ${y0 - h}" stroke="${C}" stroke-width="4" stroke-linecap="square"/>`;
     }
     // libellés en Julius
-    const lab = (x, t) => `<text x="${x}" y="${y0 - 56 + 14}" fill="${C}" font-size="13" text-anchor="middle">${t}</text>`;
+    const T = this.TEXTE;
+    const lab = (x, t) => `<text x="${x}" y="${y0 - 56 + 14}" fill="${T}" font-size="13" text-anchor="middle">${t}</text>`;
     s += lab(pad, '0') + lab(pad + L / 2, km / 2) + lab(pad + L, km + ' km');
     s += '</svg>';
     el.innerHTML = s;

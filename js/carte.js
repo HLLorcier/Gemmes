@@ -111,7 +111,7 @@ const Carte = {
     const svg = conteneur.querySelector('svg');
     svg.removeAttribute('width');
     svg.removeAttribute('height');
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid slice'); // la carte remplit l'espace
     svg.style.cssText = 'width:100%;height:100%;display:block';
     this.svg = svg;
     this.largeur = svg.viewBox.baseVal.width;
@@ -136,6 +136,7 @@ const Carte = {
       t.setAttribute('x', p.x + 16);
       t.setAttribute('y', p.y + 8);
       t.setAttribute('class', 'ville');
+      t.setAttribute('fill', '#745447');
       t.textContent = nom;
       svg.appendChild(t);
       this.labels.push(t);
@@ -192,6 +193,7 @@ const Carte = {
       gem.interp = this.construireMorph(gem, dA, dB);
       gem.echelle = gem.echelle || !gem.interp;
       if (!gem.interp) gem.interp = () => dA;
+      console.info(`${g.id} : ${gem.echelle ? 'agrandissement' : 'morphing flubber'}`);
       this.rendre(gem);
       this.brancher(gem);
       this.gemmes.push(gem);
@@ -253,6 +255,7 @@ const Carte = {
     const el = g.el;
 
     el.addEventListener('pointerenter', e => {
+      console.debug('survol', g.id);
       Sons.jouer('entree');
       this.afficherBulle(g, e);
       tween(g, g.t, 1, 280, v => { g.t = v; this.rendre(g); });
@@ -325,6 +328,7 @@ Object.assign(Carte, {
     // les noms de villes apparaissent progressivement en zoomant
     const op = Math.max(0.75, Math.min(1, 0.75 + (this.zoomActuel() - 1) * 0.25));
     this.labels.forEach(t => { t.style.opacity = op; });
+    if (this.svg) this.svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
     if (typeof Reglette !== 'undefined') Reglette.maj();
   },
 
