@@ -1,9 +1,9 @@
 const NS_COLLIER = 'http://www.w3.org/2000/svg';
 
-// Prototype physique : chaque perle est enfilée sur le fil.
-// - la gravité la fait glisser le long de la courbe (composante verticale de la tangente) ;
-// - deux perles voisines ne peuvent pas se traverser (distance minimale = diamètre) ;
-// - le fil commence hors champ, en haut des bras ; les perles tombent depuis là.
+// Collier : perles enfilées sur le fil ovale.
+// - la gravité les fait glisser le long de la courbe ;
+// - deux perles voisines ne se traversent pas (distance = diamètre) ;
+// - le fil commence hors champ, en haut des bras.
 const Collier = {
   svg: null,
   zone: null,
@@ -12,7 +12,7 @@ const Collier = {
   perles: [],
   geo: null,
   dernier: 0,
-  dernierSon: 0,
+  dernierChoc: 0,
 
   init() {
     this.svg = document.getElementById('collier');
@@ -32,30 +32,30 @@ const Collier = {
     requestAnimationFrame(t => { this.dernier = t; this.boucle(t); });
   },
 
+  // Forme ovale : bras droits, puis demi-ellipse en bas. Les bras partent hors champ.
   dessiner() {
     const w = this.zone.clientWidth;
     const h = this.zone.clientHeight;
     if (!w || !h) return;
     this.svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
 
-    // les bras commencent hors champ, au-dessus de l'écran
     const ext = h * 0.35;
     const top = h * 0.07;
     const top0 = top - ext;
     const bas = h * 0.8;
-    const R = Math.min(w * 0.3, (bas - top) / 2);
-    const cx = w / 2;
-    const cy = bas - R;
-    const xl = cx - R, xr = cx + R;
-    const Ltot = 2 * (cy - top0) + Math.PI * R;
-    const neck = Math.min(w, h) * 0.09;
-
-    const ancien = this.geo ? this.geo.Ltot : Ltot;
-    this.geo = { w, h, top0, cy, xl, xr, R, Ltot, neck, D: neck * 1.02, G: h * 2.2 };
-    this.perles.forEach(p => { p.s *= Ltot / ancien; });
+    const R = Math.min(w * 0.27, (bas - top) * 0.5);   // demi-largeur
+    const ry = Math.min(R * 1.45, bas - top - 10);     // hauteur de la partie ovale
+    const cy = bas - ry;
+    const xl = w / 2 - R, xr = w / 2 + R;
 
     this.chemin.setAttribute('d',
-      `M${xl} ${top0} L${xl} ${cy} A${R} ${R} 0 0 0 ${xr} ${cy} L${xr} ${top0}`);
+      `M${xl} ${top0} L${xl} ${cy} A${R} ${ry} 0 0 0 ${xr} ${cy} L${xr} ${top0}`);
+    const Ltot = this.chemin.getTotalLength();
+
+    const ancien = this.geo ? this.geo.Ltot : Ltot;
+    const neck = Math.min(w, h) * 0.13;                // perles plus grosses
+    this.geo = { w, h, Ltot, neck, D: neck * 1.02, G: h * 1.6 };
+    this.perles.forEach(p => { p.s *= Ltot / ancien; });
     this.perles.forEach(p => this.placer(p));
   },
 
@@ -67,8 +67,8 @@ const Collier = {
   // composante verticale de la tangente : positive quand s augmente en descendant
   penteY(s) {
     const g = this.geo;
-    const a = this.pointAt(Math.max(0, s - 1));
-    const b = this.pointAt(Math.min(g.Ltot, s + 1));
+    const a = this.pointAt(s - 1);
+    const b = this.pointAt(s + 1);
     const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
     return (b.y - a.y) / len;
   },
@@ -76,14 +76,12 @@ const Collier = {
   placer(p) {
     if (!this.geo) return;
     const q = this.pointAt(p.s);
-    const g = p.g;
-    const k = this.geo.neck / g.bA.width;
-    const c = g.cB;
+    const k = this.geo.neck / p.g.bA.width;
+    const c = p.g.cB;
     p.el.setAttribute('transform',
       `translate(${q.x} ${q.y}) scale(${k}) translate(${-c.x} ${-c.y})`);
   },
 
-  // boucle de simulation
   boucle(t) {
     const dt = Math.min((t - this.dernier) / 1000, 1 / 30);
     this.dernier = t;
@@ -95,19 +93,25 @@ const Collier = {
     const g = this.geo;
     const n = 4;
     const h = dt / n;
+    const maintenant = performance.now();
     for (let k = 0; k < n; k++) {
-      // gravité le long du fil, puis frottement léger
       for (const p of this.perles) {
         p.v += g.G * this.penteY(p.s) * h;
-        p.v *= Math.exp(-0.6 * h);
+        p.v *= Math.exp(-2.2 * h);            // frottement : glissement plus freiné
         p.s += p.v * h;
       }
       this.contraintes();
     }
+    // son de glissement, tiré au hasard, quand une perle file sur le fil
+    for (const p of this.perles) {
+      if (Math.abs(p.v) > 90 && maintenant - (p.dernierGlisse || 0) > 500) {
+        p.dernierGlisse = maintenant;
+        Sons.jouer('enfiler');
+      }
+    }
     this.perles.forEach(p => this.placer(p));
   },
 
-  // les perles restent dans l'ordre du fil et ne se traversent pas
   contraintes() {
     const g = this.geo;
     for (let it = 0; it < 12; it++) {
@@ -119,29 +123,27 @@ const Collier = {
           const corr = (g.D - d) / 2;
           a.s -= corr;
           b.s += corr;
-          // choc : les vitesses se partagent
-          const dv = Math.abs(a.v - b.v);
           const moy = (a.v + b.v) / 2;
+          const dv = Math.abs(a.v - b.v);
           a.v = moy; b.v = moy;
-          if (dv > 60 && it === 0) this.tintement();
+          if (dv > 60 && it === 0) this.choc();
         }
       }
     }
-    // bouts du fil
     for (const p of this.perles) {
       if (p.s < 0) { p.s = 0; p.v = Math.max(p.v, 0); }
       if (p.s > g.Ltot) { p.s = g.Ltot; p.v = Math.min(p.v, 0); }
     }
   },
 
-  tintement() {
+  choc() {
     const maintenant = performance.now();
-    if (maintenant - this.dernierSon < 160) return;
-    this.dernierSon = maintenant;
+    if (maintenant - this.dernierChoc < 160) return;
+    this.dernierChoc = maintenant;
     Sons.jouer('tintement');
   },
 
-  // la pierre entre par le haut du bras de son côté (hors champ) et glisse le long du fil
+  // la perle entre par le haut du bras de son côté, hors champ, et glisse sur le fil
   ajouter(g) {
     if (!this.geo) return false;
     const cote = Carte.estAGauche(g) ? 'gauche' : 'droite';
@@ -151,7 +153,7 @@ const Collier = {
     el.setAttribute('class', 'perle');
     this.groupe.appendChild(el);
 
-    const p = { g, el, cote, s: cote === 'gauche' ? 0 : this.geo.Ltot, v: 0 };
+    const p = { g, el, cote, s: cote === 'gauche' ? 0 : this.geo.Ltot, v: 0, dernierGlisse: 0 };
     this.perles.push(p);
     this.placer(p);
     Sons.jouer('chaine');

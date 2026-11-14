@@ -185,9 +185,20 @@ const Carte = {
       el.setAttribute('d', dA);
       el.setAttribute('fill', `url(#tex-${g.id})`);
       el.setAttribute('class', 'gemme');
+      el.style.pointerEvents = 'none';
       svg.appendChild(el);
 
+      // zone de survol fixe, indépendante du morphing : évite les allers-retours de survol
+      const hit = document.createElementNS(NS, 'circle');
+      hit.setAttribute('cx', ancre.x);
+      hit.setAttribute('cy', ancre.y);
+      hit.setAttribute('r', (g.taille || TAILLE_PAR_DEFAUT) * 0.6);
+      hit.setAttribute('fill', 'transparent');
+      hit.setAttribute('class', 'gemme');
+      svg.appendChild(hit);
+
       const gem = {
+        hit,
         ...g,
         el,
         bA,
@@ -197,7 +208,6 @@ const Carte = {
         cB: { x: bB.x + bB.width / 2, y: bB.y + bB.height / 2 },
         k: (g.taille || TAILLE_PAR_DEFAUT) / bA.width,
         dStill: dA,
-        dSurvol: dB,
         dSurvol: dB,
         echelle,
         interp: null,
@@ -292,6 +302,7 @@ const Carte = {
   // Affiche la forme à l'état t (0 = still, 1 = survol), centrée sur l'ancre
   rendre(g) {
     const t = g.t;
+    g.hit.setAttribute('r', (g.taille || TAILLE_PAR_DEFAUT) * 0.6 / this.zoomActuel());
     let cx = g.cA.x, cy = g.cA.y, zoom = 1;
     if (g.echelle) {
       zoom = 1 + 0.2 * t;             // agrandissement simple, sans morphing
@@ -311,7 +322,7 @@ const Carte = {
   },
 
   brancher(g) {
-    const el = g.el;
+    const el = g.hit;
 
     el.addEventListener('pointerenter', e => {
       console.debug('survol', g.id);
@@ -331,7 +342,12 @@ const Carte = {
 
     // Souris : clic simple. Mobile : double toucher.
     el.addEventListener('click', () => { if (dernierType !== 'touch') this.choisir(g); });
-    el.addEventListener('dblclick', () => { if (dernierType === 'touch') this.choisir(g); });
+    el.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'touch') return;
+      const now = performance.now();
+      if (g._tap && now - g._tap < 450) { g._tap = 0; this.choisir(g); }
+      else g._tap = now;
+    });
   },
 
   afficherBulle(g, e) {
