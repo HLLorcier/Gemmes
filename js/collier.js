@@ -103,7 +103,15 @@ const Collier = {
 
     tween(it, depart, arrivee, 1200,
       v => { it.s = v; this.placer(it); },
-      () => Sons.jouer('tintement'));
+      () => {
+        Sons.jouer('tintement');
+        // rebond amorti à l'arrivée, comme une perle qui se pose
+        const amp = this.geo.neck * 0.18;
+        tween(it, 0, 1, 600, t => {
+          it.s = arrivee + amp * Math.sin(t * Math.PI * 3) * (1 - t);
+          this.placer(it);
+        }, () => { it.s = arrivee; this.placer(it); });
+      });
     return true;
   },
 
