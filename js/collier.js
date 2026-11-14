@@ -54,7 +54,7 @@ const Collier = {
 
     const ancien = this.geo ? this.geo.Ltot : Ltot;
     const neck = Math.min(w, h) * 0.13;                // perles plus grosses
-    this.geo = { w, h, Ltot, neck, D: neck * 1.02, G: h * 1.6 };
+    this.geo = { w, h, Ltot, neck, D: neck * 1.02, G: h * 2.0 };
     this.perles.forEach(p => { p.s *= Ltot / ancien; });
     this.perles.forEach(p => this.placer(p));
   },
@@ -78,8 +78,30 @@ const Collier = {
     const q = this.pointAt(p.s);
     const k = this.geo.neck / p.g.bA.width;
     const c = p.g.cB;
+    const deg = p.angle * 180 / Math.PI;
     p.el.setAttribute('transform',
-      `translate(${q.x} ${q.y}) scale(${k}) translate(${-c.x} ${-c.y})`);
+      `translate(${q.x} ${q.y}) rotate(${deg}) scale(${k}) translate(${-c.x} ${-c.y})`);
+  },
+
+  // Axe principal de la forme (angle en radians) : c'est l'axe d'enfilage
+  axeDe(g) {
+    if (g.axe !== undefined) return g.axe;
+    const p = document.createElementNS(NS_COLLIER, 'path');
+    p.setAttribute('d', g.dSurvol);
+    this.svg.appendChild(p);
+    const L = p.getTotalLength();
+    const pts = [];
+    for (let i = 0; i < 80; i++) pts.push(p.getPointAtLength(L * i / 80));
+    p.remove();
+    const mx = pts.reduce((s, q) => s + q.x, 0) / pts.length;
+    const my = pts.reduce((s, q) => s + q.y, 0) / pts.length;
+    let vxx = 0, vyy = 0, vxy = 0;
+    for (const q of pts) {
+      const dx = q.x - mx, dy = q.y - my;
+      vxx += dx * dx; vyy += dy * dy; vxy += dx * dy;
+    }
+    g.axe = 0.5 * Math.atan2(2 * vxy, vxx - vyy);
+    return g.axe;
   },
 
   boucle(t) {
@@ -93,21 +115,29 @@ const Collier = {
     const g = this.geo;
     const n = 4;
     const h = dt / n;
-    const maintenant = performance.now();
     for (let k = 0; k < n; k++) {
       for (const p of this.perles) {
+        // pivotement : l'axe de la pierre suit la tangente du fil
+        const a = this.pointAt(p.s - 1), b = this.pointAt(p.s + 1);
+        const cible = Math.atan2(b.y - a.y, b.x - a.x) - p.g.axeCalc;
+        let diff = cible - p.angle;
+        diff = ((diff + Math.PI / 2) % Math.PI + Math.PI) % Math.PI - Math.PI / 2;  // axe sans sens
+        p.angle += diff * (1 - Math.exp(-10 * h));
         p.v += g.G * this.penteY(p.s) * h;
-        p.v *= Math.exp(-2.2 * h);            // frottement : glissement plus freiné
+        p.v *= Math.exp(-1.2 * h);            // frottement léger : chute plus rapide
         p.s += p.v * h;
       }
       this.contraintes();
     }
-    // son de glissement, tiré au hasard, quand une perle file sur le fil
+    // un seul son par glissement : il joue jusqu'au bout, et ne repart qu'après une pause
+    const now = performance.now();
     for (const p of this.perles) {
-      if (Math.abs(p.v) > 90 && maintenant - (p.dernierGlisse || 0) > 500) {
-        p.dernierGlisse = maintenant;
-        Sons.jouer('enfiler');
+      const vitesse = Math.abs(p.v);
+      if (!p.son && vitesse > 150 && now - (p.finSon || 0) > 2500) {
+        p.son = Sons.demarrer('enfiler');
+        if (p.son) p.son.onended = () => { p.son = null; p.finSon = performance.now(); };
       }
+      if (p.son) p.son.playbackRate = Math.max(0.6, Math.min(1.4, 0.7 + vitesse / 700));
     }
     this.perles.forEach(p => this.placer(p));
   },
@@ -153,7 +183,9 @@ const Collier = {
     el.setAttribute('class', 'perle');
     this.groupe.appendChild(el);
 
-    const p = { g, el, cote, s: cote === 'gauche' ? 0 : this.geo.Ltot, v: 0, dernierGlisse: 0 };
+    g.axeCalc = this.axeDe(g);
+    const p = { g, el, cote, s: cote === 'gauche' ? 0 : this.geo.Ltot, v: 0, angle: 0, dernierGlisse: 0 };
+    p.angle = Math.atan2(0, 0) - g.axeCalc + Math.PI / 2;   // départ : axe vertical, comme le bras
     this.perles.push(p);
     this.placer(p);
     Sons.jouer('chaine');

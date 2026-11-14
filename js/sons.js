@@ -27,5 +27,16 @@ const Sons = (() => {
     a.play().catch(() => {}); // ignore si l'audio n'est pas encore débloqué
   }
 
-  return { jouer };
+  // Démarre un son et le renvoie, pour pouvoir le suivre et l'arrêter
+  function demarrer(categorie) {
+    const liste = POOLS[categorie];
+    if (!liste) return null;
+    const nom = liste[Math.floor(Math.random() * liste.length)];
+    const a = new Audio(`sounds/${nom}.${ext}`);
+    a.volume = 0.9;
+    a.play().catch(() => {});
+    return a;
+  }
+
+  return { jouer, demarrer };
 })();
