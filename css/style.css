@@ -108,15 +108,14 @@ text.ville {
   font-size: 16px;
   line-height: 1;
   color: var(--texte);
-  background: var(--fiche);
-  border: 1px solid rgba(116, 84, 71, .35);
+  background: transparent;
+  border: 0;
   border-radius: 8px;
   cursor: pointer;
 }
 .zoom button:hover {
-  background: var(--turquoise);
-  border-color: var(--turquoise);
-  color: var(--fiche);
+  background: #D7E6D5;
+  color: var(--jaune);
 }
 
 /* Bouton son : pastille, turquoise au survol */
@@ -129,16 +128,15 @@ text.ville {
   font-size: 13px;
   letter-spacing: .25em;
   color: var(--texte);
-  background: var(--fiche);
-  border: 1px solid rgba(116, 84, 71, .35);
+  background: transparent;
+  border: 0;
   border-radius: 30px;
   padding: 8px 16px;
   cursor: pointer;
 }
 .son:hover {
-  background: var(--turquoise);
-  border-color: var(--turquoise);
-  color: var(--fiche);
+  background: #D7E6D5;
+  color: var(--jaune);
 }
 
 /* Réglette : en bas de la carte, à droite */

@@ -158,7 +158,7 @@ const Carte = {
     for (const g of donnees) {
       const a = ancres['ancre-' + g.id];
       if (g.sur_carte === false) continue;             // pierre absente de la carte
-      if (!a) { console.warn('Pas d’ancre pour', g.id); continue; }
+      if (!a || !isFinite(a.x) || !isFinite(a.y)) { console.warn('Ancre invalide pour', g.id, a); continue; }
       const dx = (g.decalage && g.decalage.dx) || 0;
       const dy = (g.decalage && g.decalage.dy) || 0;
       pos[g.id] = { x: a.x + dx, y: a.y + dy };
@@ -245,8 +245,10 @@ const Carte = {
     p.x = b.x + b.width / 2;
     p.y = b.y + b.height / 2;
     // élément -> écran -> repère racine du SVG (sans l'échelle de la fenêtre)
-    const m = this.svg.getScreenCTM().inverse().multiply(el.getScreenCTM());
-    return p.matrixTransform(m);
+    const sCTM = this.svg.getScreenCTM();
+    const eCTM = el.getScreenCTM();
+    if (!sCTM || !eCTM) return { x: NaN, y: NaN };
+    return p.matrixTransform(sCTM.inverse().multiply(eCTM));
   },
 
   // Affiche la forme à l'état t (0 = still, 1 = survol), centrée sur l'ancre
