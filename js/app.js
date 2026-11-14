@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const data = await (await fetch('data/gemmes.json')).json();
   await Carte.init(data.gemmes);
   Carte.initVue();
+  window.addEventListener('load', () => Reglette.maj());
   Collier.init();
 
   // Zoom

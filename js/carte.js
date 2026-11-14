@@ -1,5 +1,29 @@
 const NS = 'http://www.w3.org/2000/svg';
-const TAILLE_PAR_DEFAUT = 130; // largeur d'une gemme sur la carte, en unités du viewBox
+const TAILLE_PAR_DEFAUT = 60;
+const ESPACE_MINI = 10; // vide minimum entre deux pierres, en unités du SVG
+
+// Repousse les pierres qui se chevauchent, sans les éloigner plus que nécessaire
+function separerPierres(items) {
+  for (let it = 0; it < 300; it++) {
+    let bouge = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const a = items[i], b = items[j];
+        let dx = b.x - a.x, dy = b.y - a.y;
+        const d = Math.hypot(dx, dy) || 0.001;
+        const mini = a.r + b.r + ESPACE_MINI;
+        if (d < mini) {
+          const push = (mini - d) / 2;
+          const ux = dx / d, uy = dy / d;
+          a.x -= ux * push; a.y -= uy * push;
+          b.x += ux * push; b.y += uy * push;
+          bouge = true;
+        }
+      }
+    }
+    if (!bouge) break;
+  }
+} // largeur d'une gemme sur la carte, en unités du viewBox
 
 // Distance à vol d'oiseau Le Caire – Assouan, en km (≈ 682 km)
 const KM_CAIRE_ASSOUAN = 682;
@@ -117,13 +141,24 @@ const Carte = {
       this.labels.push(t);
     });
 
-    // Gemmes : still + survol, morphing par flubber
+    // Positions : ancre + décalage manuel, puis écartement des pierres qui se touchent
+    const pos = {};
+    const items = [];
     for (const g of donnees) {
-      const ancreBrute = ancres['ancre-' + g.id];
-      if (!ancreBrute) { console.warn('Pas d’ancre pour', g.id); continue; }
+      const a = ancres['ancre-' + g.id];
+      if (!a) { console.warn('Pas d’ancre pour', g.id); continue; }
       const dx = (g.decalage && g.decalage.dx) || 0;
       const dy = (g.decalage && g.decalage.dy) || 0;
-      const ancre = { x: ancreBrute.x + dx, y: ancreBrute.y + dy };
+      pos[g.id] = { x: a.x + dx, y: a.y + dy };
+      items.push({ id: g.id, x: pos[g.id].x, y: pos[g.id].y, r: (g.taille || TAILLE_PAR_DEFAUT) / 2 });
+    }
+    separerPierres(items);
+    items.forEach(it => { pos[it.id] = { x: it.x, y: it.y }; });
+
+    // Gemmes : still + survol, morphing par flubber
+    for (const g of donnees) {
+      const ancre = pos[g.id];
+      if (!ancre) continue;
       creerTexture(defs, g.id, g.texture);
 
       const [dA, dB] = await Promise.all([
@@ -151,9 +186,12 @@ const Carte = {
         k: (g.taille || TAILLE_PAR_DEFAUT) / bA.width,
         dStill: dA,
         echelle,
-        interp: echelle ? (() => dA) : flubber.interpolate(dA, dB, { maxSegmentLength: 6 }),
+        interp: null,
         t: 0
       };
+      gem.interp = this.construireMorph(gem, dA, dB);
+      gem.echelle = gem.echelle || !gem.interp;
+      if (!gem.interp) gem.interp = () => dA;
       this.rendre(gem);
       this.brancher(gem);
       this.gemmes.push(gem);
@@ -169,13 +207,31 @@ const Carte = {
     });
   },
 
+  // Construit le morphing ; retourne null si flubber n'est pas disponible
+  construireMorph(g, dA, dB) {
+    if (g.echelle) return null;
+    if (typeof flubber === 'undefined') {
+      console.error('flubber absent : morphing désactivé pour', g.id);
+      return null;
+    }
+    const f = flubber.interpolate(dA, dB, { maxSegmentLength: 6 });
+    // test : la fonction doit produire un tracé à mi-chemin
+    if (typeof f(0.5) !== 'string' || f(0.5).length < 10) {
+      console.error('morphing invalide pour', g.id);
+      return null;
+    }
+    return f;
+  },
+
   // Centre d'un élément, transformé dans le repère racine de la carte
   centre(el) {
     const b = el.getBBox();
     const p = this.svg.createSVGPoint();
     p.x = b.x + b.width / 2;
     p.y = b.y + b.height / 2;
-    return p.matrixTransform(el.getCTM());
+    // élément -> écran -> repère racine du SVG (sans l'échelle de la fenêtre)
+    const m = this.svg.getScreenCTM().inverse().multiply(el.getScreenCTM());
+    return p.matrixTransform(m);
   },
 
   // Affiche la forme à l'état t (0 = still, 1 = survol), centrée sur l'ancre
@@ -249,7 +305,8 @@ Object.assign(Carte, {
     this.svg.addEventListener('wheel', e => {
       e.preventDefault();
       const p = this.coordsEcran(e.clientX, e.clientY);
-      this.zoomer(e.deltaY < 0 ? 1.15 : 1 / 1.15, p.x, p.y);
+      const f = Math.exp(-e.deltaY * (e.ctrlKey ? 0.02 : 0.005));  // pincement ou défilement
+      this.zoomer(f, p.x, p.y);
     }, { passive: false });
     this.appliquerVue();
   },
@@ -266,7 +323,7 @@ Object.assign(Carte, {
     const v = this.vue;
     this.svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
     // les noms de villes apparaissent progressivement en zoomant
-    const op = Math.max(0, Math.min(1, (this.zoomActuel() - 1.3) / 1.2));
+    const op = Math.max(0.75, Math.min(1, 0.75 + (this.zoomActuel() - 1) * 0.25));
     this.labels.forEach(t => { t.style.opacity = op; });
     if (typeof Reglette !== 'undefined') Reglette.maj();
   },

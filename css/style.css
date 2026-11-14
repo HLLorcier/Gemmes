@@ -17,20 +17,18 @@
 html, body { margin: 0; height: 100%; }
 
 body {
+  margin: 0;
   font-family: 'Julius Sans One', serif;
   color: var(--texte);
   background: var(--jaune);
-  display: grid;
-  place-items: center;
-  min-height: 100vh;
   overflow: hidden;
 }
 
 /* Mise en page 16:9 */
 #scene {
   position: relative;
-  width: min(100vw, calc(100vh * 16 / 9));
-  aspect-ratio: 16 / 9;
+  width: 100vw;
+  height: 100vh;
   display: grid;
   grid-template-columns: 60% 40%;
 }
@@ -113,7 +111,7 @@ text.ville {
 /* Mobile : colonnes empilées */
 @media (max-width: 800px) {
   body { display: block; overflow: auto; }
-  #scene { width: 100vw; aspect-ratio: auto; grid-template-columns: 1fr; grid-template-rows: 60vh 50vh; }
+  #scene { width: 100vw; height: auto; grid-template-columns: 1fr; grid-template-rows: 60vh 50vh; }
   .titre { top: 4%; }
   #carte { top: 14%; bottom: 4%; }
   #cisailles { width: 12%; }
@@ -121,14 +119,14 @@ text.ville {
 }
 
 /* Zoom */
-.zoom { position: absolute; right: 5%; top: 20%; display: flex; flex-direction: column; gap: 6px; z-index: 4; }
+.zoom { position: absolute; right: 24px; top: 24px; display: flex; flex-direction: column; gap: 6px; z-index: 4; }
 .zoom button, .muet {
   font: inherit; color: var(--texte); background: var(--fiche);
   border: 1px solid rgba(116, 84, 71, .35); border-radius: 8px;
   width: 34px; height: 34px; cursor: pointer; font-size: 16px;
 }
-.muet { position: absolute; right: 5%; top: 4%; width: auto; height: auto; padding: 6px 12px; font-size: 12px; letter-spacing: .15em; z-index: 4; }
+.muet { position: absolute; right: 24px; top: 150px; width: auto; height: auto; padding: 6px 12px; font-size: 12px; letter-spacing: .15em; z-index: 4; }
 
 /* Réglette en km, couleur menthe */
-#reglette { position: absolute; left: 5%; bottom: 3%; z-index: 3; pointer-events: none; }
+#reglette { position: absolute; left: 6%; bottom: 4%; z-index: 3; pointer-events: none; display: block; }
 #reglette text { font-family: 'Julius Sans One', serif; }

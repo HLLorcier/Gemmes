@@ -70,9 +70,11 @@ const Collier = {
   placer(it) {
     if (!this.geo) return;
     const p = this.pointAt(it.s);
-    const k = this.geo.neck / it.g.bA.width;
+    const g = it.g;
+    const k = this.geo.neck / g.bA.width * (g.echelle ? 1.2 : 1);
+    const c = g.echelle ? g.cA : g.cB;
     it.el.setAttribute('transform',
-      `translate(${p.x} ${p.y}) scale(${k}) translate(${-it.g.cA.x} ${-it.g.cA.y})`);
+      `translate(${p.x} ${p.y}) scale(${k}) translate(${-c.x} ${-c.y})`);
   },
 
   // Ajoute une gemme : elle glisse depuis le fond vers son emplacement
@@ -84,7 +86,8 @@ const Collier = {
     const index = this.items.filter(it => it.cote === cote).length;
 
     const el = document.createElementNS(NS_COLLIER, 'path');
-    el.setAttribute('d', g.dStill);
+    // forme finale : survol morphé (ou agrandissement pour les pierres 'echelle')
+    el.setAttribute('d', g.echelle ? g.dStill : g.interp(1));
     el.setAttribute('fill', `url(#tex-${g.id})`);
     this.groupe.appendChild(el);
 
