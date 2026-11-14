@@ -1,6 +1,7 @@
 const NS_COLLIER = 'http://www.w3.org/2000/svg';
 
-// Les perles s'alignent dans l'ordre d'ajout, de gauche à droite le long du fil.
+// Les pierres tombent du haut du bras de leur côté et s'empilent depuis le fond du U,
+// comme sous l'effet de la gravité. Une nouvelle pierre ne passe jamais par-dessus les autres.
 const Collier = {
   svg: null,
   zone: null,
@@ -43,6 +44,7 @@ const Collier = {
     this.geo = {
       w, h, top, cy, xl, xr, R, Lh,
       Ltot: 2 * Lh + Math.PI * R,
+      sCentre: Lh + Math.PI * R / 2,   // fond du U, le long du fil
       neck,
       gap: neck * 1.05
     };
@@ -50,12 +52,14 @@ const Collier = {
     this.chemin.setAttribute('d',
       `M${xl} ${top} L${xl} ${cy} A${R} ${R} 0 0 0 ${xr} ${cy} L${xr} ${top}`);
 
-    this.items.forEach(it => { it.s = this.sPour(it.index); this.placer(it); });
+    this.items.forEach(it => { it.s = this.sFor(it.cote, it.rang); this.placer(it); });
   },
 
-  // Position le long du fil pour le rang i
-  sPour(i) {
-    return this.geo.neck * 0.5 + i * this.geo.gap;
+  // Position d'arrivée : empilée depuis le fond, du côté de la pierre
+  sFor(cote, rang) {
+    const g = this.geo;
+    const off = g.neck * 0.5 + rang * g.gap;
+    return cote === 'droite' ? g.sCentre + off : g.sCentre - off;
   },
 
   // s < 0 : au-dessus du bras gauche ; s > Ltot : au-dessus du bras droit (hors écran)
@@ -70,40 +74,42 @@ const Collier = {
     if (!this.geo) return;
     const p = this.pointAt(it.s);
     const g = it.g;
-    const k = this.geo.neck / g.bA.width * (g.echelle ? 1.2 : 1);
-    const c = g.echelle ? g.cA : g.cB;
+    const k = this.geo.neck / g.bA.width;
+    const c = g.cB;                    // centre de la forme survol
     it.el.setAttribute('transform',
       `translate(${p.x} ${p.y}) scale(${k}) translate(${-c.x} ${-c.y})`);
   },
 
-  // Ajoute une pierre (forme taillée, survol morphé) : elle descend du haut du bras droit
+  // Ajoute une pierre (forme taillée, survol morphé) : elle tombe du haut de son bras
   ajouter(g) {
     if (!this.geo) return false;
-    const index = this.items.length;
-    if (this.sPour(index) > this.geo.Ltot - this.geo.neck * 0.5) {
-      console.info('Collier plein');
+    const cote = Carte.estAGauche(g) ? 'gauche' : 'droite';
+    const rang = this.items.filter(it => it.cote === cote).length;
+    const arrivee = this.sFor(cote, rang);
+    if (arrivee < this.geo.neck * 0.5 || arrivee > this.geo.Ltot - this.geo.neck * 0.5) {
+      console.info('Collier plein de ce côté');
       return false;
     }
 
     const el = document.createElementNS(NS_COLLIER, 'path');
-    el.setAttribute('d', g.echelle ? g.dStill : g.interp(1));
+    el.setAttribute('d', g.dSurvol);   // forme du fichier -survol, telle quelle
     el.setAttribute('fill', `url(#tex-${g.id})`);
     this.groupe.appendChild(el);
 
-    const it = { g, index, el, s: this.geo.Ltot + this.geo.neck * 2 };
+    const depart = cote === 'droite' ? this.geo.Ltot + this.geo.neck * 2 : -this.geo.neck * 2;
+    const it = { g, cote, rang, el, s: depart };
     this.items.push(it);
     this.placer(it);
 
-    Sons.jouer('chaine');
-    tween(it, it.s, this.sPour(index), 1400,
+    tween(it, depart, arrivee, 1200,
       v => { it.s = v; this.placer(it); },
       () => Sons.jouer('tintement'));
     return true;
   },
 
-  // Cisailles : le fil se brise, les pierres disparaissent en fondu
+  // Cisailles : coupe-collier, le fil se brise, les pierres disparaissent en fondu
   reinitialiser() {
-    Sons.jouer('ciseau');
+    Sons.jouer('coupe');
     tween(this, 1, 0.25, 200,
       v => { this.chemin.style.opacity = v; },
       () => tween(this, 0.25, 1, 500, v => { this.chemin.style.opacity = v; }));

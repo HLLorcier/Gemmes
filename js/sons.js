@@ -10,7 +10,7 @@ const Sons = (() => {
     sortie: ['pierresortie1', 'pierresortie2', 'pierresortie3'],
     tintement: ['pierre1', 'pierre2', 'pierre3', 'pierre4', 'pierre5', 'pierre6', 'pierre7', 'pierre8'],
     chaine: ['pierre7'],   // remplace l'ancien son de chaîne
-    ciseau: ['ciseau']
+    ciseau: ['coupecollier']   // coupe-collier.wav
   };
 
   // OGG pour la plupart des navigateurs, MP3 pour Safari

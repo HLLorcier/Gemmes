@@ -27,13 +27,13 @@ const Reglette = {
     const C = this.COULEUR;
     let s = `<svg width="${L + 2 * pad}" height="${H}" viewBox="0 0 ${L + 2 * pad} ${H}" fill="none">`;
     // base horizontale
-    s += `<path d="M${pad} ${y0} L${pad + L} ${y0}" stroke="${C}" stroke-width="2"/>`;
+    s += `<path d="M${pad} ${y0} L${pad + L} ${y0}" stroke="${C}" stroke-width="1"/>`;
     // graduations : 4 divisions, grandes aux extrémités et au milieu
     for (let i = 0; i <= 4; i++) {
       const x = pad + (L * i) / 4;
       const grande = i % 2 === 0;
       const h = grande ? 48 : 28;
-      s += `<path d="M${x} ${y0} L${x} ${y0 - h}" stroke="${C}" stroke-width="2" stroke-linecap="square"/>`;
+      s += `<path d="M${x} ${y0} L${x} ${y0 - h}" stroke="${C}" stroke-width="1" stroke-linecap="square"/>`;
     }
     // libellés en Julius
     const T = this.TEXTE;

@@ -101,7 +101,7 @@ text.ville {
   
 
 /* Réglette en km, couleur menthe */
-#reglette { position: absolute; left: 6%; bottom: 4%; z-index: 3; pointer-events: none; display: block; }
+#reglette { position: absolute; right: 9%; bottom: 7%; z-index: 3; pointer-events: none; display: block; }
 #reglette text { font-family: 'Julius Sans One', serif; }
 
 /* Icônes de zoom : sans contour, marron, vert menthe au survol */
@@ -111,3 +111,29 @@ text.ville {
   color: var(--texte); cursor: pointer; line-height: 1;
 }
 .zoom button:hover { color: #D2E7D1; }
+
+.son {
+  position: absolute; right: 24px; top: 150px; z-index: 4;
+  background: none; border: 0; padding: 0; font: inherit; font-size: 13px;
+  letter-spacing: .25em; color: var(--texte); cursor: pointer;
+}
+.son:hover { color: #D2E7D1; }
+
+/* Icônes d'origine : cases arrondies, vert menthe au survol */
+.zoom { position: absolute; right: 24px; top: 24px; display: flex; flex-direction: column; gap: 6px; z-index: 4; }
+.zoom button, .muet {
+  font: inherit; color: var(--texte); background: var(--fiche);
+  border: 1px solid rgba(116, 84, 71, .35); border-radius: 8px;
+  width: 34px; height: 34px; font-size: 16px; cursor: pointer;
+}
+.zoom button:hover, .muet:hover { background: #D2E7D1; }
+.muet {
+  position: absolute; right: 24px; top: 170px; width: auto; height: auto;
+  padding: 8px 16px; border-radius: 30px; font-size: 13px; letter-spacing: .2em; z-index: 4;
+}
+
+/* Réglette : bas à droite de la carte, avec marge */
+#reglette {
+  position: absolute !important; left: auto !important; top: auto !important;
+  right: 9%; bottom: 9%; z-index: 3; pointer-events: none;
+}

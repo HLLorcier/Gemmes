@@ -111,7 +111,7 @@ const Carte = {
     const svg = conteneur.querySelector('svg');
     svg.removeAttribute('width');
     svg.removeAttribute('height');
-    svg.setAttribute('preserveAspectRatio', 'xMidYMid slice'); // la carte remplit l'espace
+    svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     svg.style.cssText = 'width:100%;height:100%;display:block';
     this.svg = svg;
     this.largeur = svg.viewBox.baseVal.width;
@@ -197,6 +197,8 @@ const Carte = {
         cB: { x: bB.x + bB.width / 2, y: bB.y + bB.height / 2 },
         k: (g.taille || TAILLE_PAR_DEFAUT) / bA.width,
         dStill: dA,
+        dSurvol: dB,
+        dSurvol: dB,
         echelle,
         interp: null,
         t: 0
@@ -339,7 +341,6 @@ Object.assign(Carte, {
     // les noms de villes apparaissent progressivement en zoomant
     const op = Math.max(0.75, Math.min(1, 0.75 + (this.zoomActuel() - 1) * 0.25));
     this.labels.forEach(t => { t.style.opacity = op; });
-    if (this.svg) this.svg.setAttribute('preserveAspectRatio', 'xMidYMid slice');
     if (typeof Reglette !== 'undefined') Reglette.maj();
   },
 
