@@ -9,6 +9,8 @@ async function chargerCisailles() {
     if (f && f !== 'none') el.setAttribute('fill', 'currentColor');
     const s = el.getAttribute('stroke');
     if (s && s !== 'none') el.setAttribute('stroke', 'currentColor');
+    // rendu plein : le trait prend la couleur du remplissage
+    if (s && s !== 'none') el.setAttribute('fill', 'currentColor');
   });
   svg.removeAttribute('width');
   svg.removeAttribute('height');

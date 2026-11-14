@@ -88,8 +88,7 @@
       "decalage": {
         "dx": 0,
         "dy": 0
-      },
-      "sur_carte": false
+      }
     }
   ]
 }

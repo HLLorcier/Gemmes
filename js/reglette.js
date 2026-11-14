@@ -32,7 +32,7 @@ const Reglette = {
     for (let i = 0; i <= 4; i++) {
       const x = pad + (L * i) / 4;
       const grande = i % 2 === 0;
-      const h = grande ? 22 : 13;
+      const h = grande ? 14 : 8;
       s += `<path d="M${x} ${y0} L${x} ${y0 - h}" stroke="${C}" stroke-width="0.6" stroke-linecap="square"/>`;
     }
     // libellés en Julius

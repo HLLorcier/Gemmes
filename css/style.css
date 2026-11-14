@@ -91,7 +91,7 @@ text.ville { font-family: 'Julius Sans One', serif; font-size: 22px; pointer-eve
 
 /* Réglette : bas à droite, avec marge */
 #reglette {
-  position: absolute; right: 9%; bottom: 9%; z-index: 3; pointer-events: none;
+  position: absolute; right: 6%; bottom: 3%; z-index: 3; pointer-events: none;
 }
 #reglette text { font-family: 'Julius Sans One', serif; }
 
