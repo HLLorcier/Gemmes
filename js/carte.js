@@ -231,7 +231,7 @@ const Carte = {
     }
     const f = flubber.interpolate(dA, dB, { maxSegmentLength: 6 });
     // test : la fonction doit produire un tracé à mi-chemin
-    if (typeof f(0.5) !== 'string' || f(0.5).length < 10) {
+    if (typeof f(0.5) !== 'string' || f(0.5).length < 10 || typeof f(1) !== 'string') {
       console.error('morphing invalide pour', g.id);
       return null;
     }
@@ -259,9 +259,15 @@ const Carte = {
       cx = g.cA.x + (g.cB.x - g.cA.x) * t;
       cy = g.cA.y + (g.cB.y - g.cA.y) * t;
     }
-    g.el.setAttribute('d', g.interp(t));
+    try {
+      g.el.setAttribute('d', g.interp(t));
+    } catch (err) {
+      console.error('morphing impossible pour', g.id, err);
+    }
+    // taille à l'écran constante : la pierre ne grossit pas avec le zoom
+    const echelleEcran = g.k / this.zoomActuel() * zoom;
     g.el.setAttribute('transform',
-      `translate(${g.ax} ${g.ay}) scale(${g.k * zoom}) translate(${-cx} ${-cy})`);
+      `translate(${g.ax} ${g.ay}) scale(${echelleEcran}) translate(${-cx} ${-cy})`);
   },
 
   brancher(g) {
@@ -341,6 +347,7 @@ Object.assign(Carte, {
     // les noms de villes apparaissent progressivement en zoomant
     const op = Math.max(0.75, Math.min(1, 0.75 + (this.zoomActuel() - 1) * 0.25));
     this.labels.forEach(t => { t.style.opacity = op; });
+    this.gemmes.forEach(g => this.rendre(g));
     if (typeof Reglette !== 'undefined') Reglette.maj();
   },
 
