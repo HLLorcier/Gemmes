@@ -94,6 +94,7 @@ const Collier = {
     const el = document.createElementNS(NS_COLLIER, 'path');
     el.setAttribute('d', g.dSurvol);   // forme du fichier -survol, telle quelle
     el.setAttribute('fill', `url(#tex-${g.id})`);
+    el.setAttribute('class', 'perle');
     this.groupe.appendChild(el);
 
     const depart = cote === 'droite' ? this.geo.Ltot + this.geo.neck * 2 : -this.geo.neck * 2;

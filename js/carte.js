@@ -345,8 +345,8 @@ const Carte = {
 
   placerBulle(e) {
     const r = this.gauche.getBoundingClientRect();
-    this.bulle.style.left = (e.clientX - r.left) + 'px';
-    this.bulle.style.top = (e.clientY - r.top) + 'px';
+    this.bulle.style.left = (e.clientX - r.left + 18) + 'px';
+    this.bulle.style.top = (e.clientY - r.top - 44) + 'px';
   },
 
   cacherBulle() { this.bulle.hidden = true; },

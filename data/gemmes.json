@@ -69,7 +69,7 @@
       "ancre": "ancre-cornaline",
       "texture": "cornaline-ok.jpg",
       "taille": 75,
-      "morph": "echelle",
+      "morph": "flubber",
       "decalage": {
         "dx": 0,
         "dy": 0
