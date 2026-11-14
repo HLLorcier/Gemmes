@@ -9,7 +9,7 @@ const Sons = (() => {
     entree: ['pierreentree1', 'pierreentree2', 'pierreentree3'],
     sortie: ['pierresortie1', 'pierresortie2', 'pierresortie3'],
     tintement: ['pierre1', 'pierre2', 'pierre3', 'pierre4', 'pierre5', 'pierre6', 'pierre7', 'pierre8'],
-    chaine: ['chaine'],
+    chaine: ['pierre7'],   // remplace l'ancien son de chaîne
     ciseau: ['ciseau']
   };
 
@@ -21,7 +21,7 @@ const Sons = (() => {
     if (!liste) return;
     const nom = liste[Math.floor(Math.random() * liste.length)];
     const a = new Audio(`sounds/${nom}.${ext}`);
-    a.volume = 0.7;
+    a.volume = 0.9;   // bruitages plus présents que la musique
     a.play().catch(() => {}); // ignore si l'audio n'est pas encore débloqué
   }
 

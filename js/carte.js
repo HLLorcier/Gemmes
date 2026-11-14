@@ -1,15 +1,17 @@
 const NS = 'http://www.w3.org/2000/svg';
-const TAILLE_GEMME = 220;   // largeur d'une gemme sur la carte, en unités du viewBox (à ajuster)
+const TAILLE_PAR_DEFAUT = 130; // largeur d'une gemme sur la carte, en unités du viewBox
+
+// Distance à vol d'oiseau Le Caire – Assouan, en km (≈ 682 km)
+const KM_CAIRE_ASSOUAN = 682;
 
 const VILLES = {
   'ancre-ville-le-caire': 'Le Caire',
-  'ancre-ville-giza': 'Gizeh',
+  'ancre-ville-giza': 'Giza',
   'ancre-ville-assouan': 'Assouan',
   'ancre-ville-louxor': 'Louxor',
-  'ancre-ville-el-kharga': 'El-Kharga',
-  'ancre-ville-assiout': 'Assiout',
+  'ancre-ville-el-kharga': 'El Kharga',
   'ancre-ville-minieh': 'Minieh',
-  'ancre-ville-medinet-el-fayoum': 'Medinet el-Fayoum'
+  'ancre-ville-medinet-el-fayoum': 'El Fayoum'
 };
 
 // Dernier type de pointeur utilisé : 'mouse', 'touch' ou 'pen'
@@ -66,6 +68,9 @@ function creerTexture(defs, id, fichier) {
 const Carte = {
   svg: null,
   gemmes: [],
+  labels: [],
+  hauteur: 0,
+  kmParUnite: 1,
   largeur: 0,
   onSelection: null,
   bulle: null,
@@ -86,6 +91,7 @@ const Carte = {
     svg.style.cssText = 'width:100%;height:100%;display:block';
     this.svg = svg;
     this.largeur = svg.viewBox.baseVal.width;
+    this.hauteur = svg.viewBox.baseVal.height;
 
     // Lire les ancres (positions dans le repère de la carte), puis les masquer
     const ancres = {};
@@ -93,6 +99,10 @@ const Carte = {
       ancres[el.id] = this.centre(el);
       el.style.display = 'none';
     });
+
+    // Échelle : distance réelle Le Caire – Assouan / distance dans le SVG
+    const pa = ancres['ancre-ville-le-caire'], pb = ancres['ancre-ville-assouan'];
+    if (pa && pb) this.kmParUnite = KM_CAIRE_ASSOUAN / Math.hypot(pb.x - pa.x, pb.y - pa.y);
 
     // Étiquettes des villes
     Object.entries(VILLES).forEach(([id, nom]) => {
@@ -104,12 +114,16 @@ const Carte = {
       t.setAttribute('class', 'ville');
       t.textContent = nom;
       svg.appendChild(t);
+      this.labels.push(t);
     });
 
     // Gemmes : still + survol, morphing par flubber
     for (const g of donnees) {
-      const ancre = ancres['ancre-' + g.id];
-      if (!ancre) { console.warn('Pas d’ancre pour', g.id); continue; }
+      const ancreBrute = ancres['ancre-' + g.id];
+      if (!ancreBrute) { console.warn('Pas d’ancre pour', g.id); continue; }
+      const dx = (g.decalage && g.decalage.dx) || 0;
+      const dy = (g.decalage && g.decalage.dy) || 0;
+      const ancre = { x: ancreBrute.x + dx, y: ancreBrute.y + dy };
       creerTexture(defs, g.id, g.texture);
 
       const [dA, dB] = await Promise.all([
@@ -118,6 +132,7 @@ const Carte = {
       ]);
       const bA = bboxDe(svg, dA);
       const bB = bboxDe(svg, dB);
+      const echelle = g.morph === 'echelle';
 
       const el = document.createElementNS(NS, 'path');
       el.setAttribute('d', dA);
@@ -133,9 +148,10 @@ const Carte = {
         ay: ancre.y,
         cA: { x: bA.x + bA.width / 2, y: bA.y + bA.height / 2 },
         cB: { x: bB.x + bB.width / 2, y: bB.y + bB.height / 2 },
-        k: TAILLE_GEMME / bA.width,
+        k: (g.taille || TAILLE_PAR_DEFAUT) / bA.width,
         dStill: dA,
-        interp: flubber.interpolate(dA, dB, { maxSegmentLength: 6 }),
+        echelle,
+        interp: echelle ? (() => dA) : flubber.interpolate(dA, dB, { maxSegmentLength: 6 }),
         t: 0
       };
       this.rendre(gem);
@@ -165,11 +181,16 @@ const Carte = {
   // Affiche la forme à l'état t (0 = still, 1 = survol), centrée sur l'ancre
   rendre(g) {
     const t = g.t;
-    const cx = g.cA.x + (g.cB.x - g.cA.x) * t;
-    const cy = g.cA.y + (g.cB.y - g.cA.y) * t;
+    let cx = g.cA.x, cy = g.cA.y, zoom = 1;
+    if (g.echelle) {
+      zoom = 1 + 0.2 * t;             // agrandissement simple, sans morphing
+    } else {
+      cx = g.cA.x + (g.cB.x - g.cA.x) * t;
+      cy = g.cA.y + (g.cB.y - g.cA.y) * t;
+    }
     g.el.setAttribute('d', g.interp(t));
     g.el.setAttribute('transform',
-      `translate(${g.ax} ${g.ay}) scale(${g.k}) translate(${-cx} ${-cy})`);
+      `translate(${g.ax} ${g.ay}) scale(${g.k * zoom}) translate(${-cx} ${-cy})`);
   },
 
   brancher(g) {
@@ -199,7 +220,7 @@ const Carte = {
     const b = this.bulle;
     b.querySelector('.bulle-nom').textContent = g.nom;
     b.querySelector('.bulle-lieu').textContent = g.lieu || '';
-    b.querySelector('.bulle-accroche').textContent = g.accroche;
+    b.querySelector('.bulle-texte').textContent = g.texte;
     b.hidden = false;
     this.placerBulle(e);
   },
@@ -216,3 +237,61 @@ const Carte = {
 
   estAGauche(g) { return g.ax < this.largeur / 2; }
 };
+
+// Zoom : la vue (viewBox) change, les gemmes suivent puisqu'elles sont dans le même repère
+Object.assign(Carte, {
+  vue: null,
+  zoomMin: 1,
+  zoomMax: 8,
+
+  initVue() {
+    this.vue = { x: 0, y: 0, w: this.largeur, h: this.hauteur };
+    this.svg.addEventListener('wheel', e => {
+      e.preventDefault();
+      const p = this.coordsEcran(e.clientX, e.clientY);
+      this.zoomer(e.deltaY < 0 ? 1.15 : 1 / 1.15, p.x, p.y);
+    }, { passive: false });
+    this.appliquerVue();
+  },
+
+  coordsEcran(cx, cy) {
+    const p = this.svg.createSVGPoint();
+    p.x = cx; p.y = cy;
+    return p.matrixTransform(this.svg.getScreenCTM().inverse());
+  },
+
+  zoomActuel() { return this.largeur / this.vue.w; },
+
+  appliquerVue() {
+    const v = this.vue;
+    this.svg.setAttribute('viewBox', `${v.x} ${v.y} ${v.w} ${v.h}`);
+    // les noms de villes apparaissent progressivement en zoomant
+    const op = Math.max(0, Math.min(1, (this.zoomActuel() - 1.3) / 1.2));
+    this.labels.forEach(t => { t.style.opacity = op; });
+    if (typeof Reglette !== 'undefined') Reglette.maj();
+  },
+
+  // Zoom centré sur le point (px, py), en coordonnées de la carte
+  zoomer(f, px, py) {
+    const v = this.vue;
+    const nw = Math.min(this.largeur / this.zoomMin, Math.max(this.largeur / this.zoomMax, v.w / f));
+    const r = nw / v.w;
+    const nh = v.h * r;
+    let x = px - (px - v.x) * r;
+    let y = py - (py - v.y) * r;
+    x = Math.max(0, Math.min(this.largeur - nw, x));
+    y = Math.max(0, Math.min(this.hauteur - nh, y));
+    this.vue = { x, y, w: nw, h: nh };
+    this.appliquerVue();
+  },
+
+  zoomerAuCentre(f) {
+    const v = this.vue;
+    this.zoomer(f, v.x + v.w / 2, v.y + v.h / 2);
+  },
+
+  vueComplete() {
+    this.vue = { x: 0, y: 0, w: this.largeur, h: this.hauteur };
+    this.appliquerVue();
+  }
+});

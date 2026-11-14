@@ -60,9 +60,16 @@ const Collier = {
     return Math.max(g.neck / 2, Math.min(g.Ltot - g.neck / 2, s));
   },
 
+  // s < 0 : au-dessus du haut du collier, hors écran
+  pointAt(s) {
+    const g = this.geo;
+    if (s < 0) return { x: g.xl, y: g.top + s };
+    return this.chemin.getPointAtLength(s);
+  },
+
   placer(it) {
     if (!this.geo) return;
-    const p = this.chemin.getPointAtLength(it.s);
+    const p = this.pointAt(it.s);
     const k = this.geo.neck / it.g.bA.width;
     it.el.setAttribute('transform',
       `translate(${p.x} ${p.y}) scale(${k}) translate(${-it.g.cA.x} ${-it.g.cA.y})`);
@@ -81,12 +88,13 @@ const Collier = {
     el.setAttribute('fill', `url(#tex-${g.id})`);
     this.groupe.appendChild(el);
 
-    const it = { g, cote, index, el, s: this.geo.sCentre };
+    const depart = -this.geo.top - this.geo.neck * 2; // hors champ, au-dessus
+    const it = { g, cote, index, el, s: depart };
     this.items.push(it);
     this.placer(it);
 
     Sons.jouer('chaine');
-    tween(it, it.s, this.sFor(cote, index), 900,
+    tween(it, depart, this.sFor(cote, index), 1600,
       v => { it.s = v; this.placer(it); },
       () => Sons.jouer('tintement'));
     return true;

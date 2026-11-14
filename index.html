@@ -8,11 +8,6 @@
 </head>
 <body>
 
-<div id="accueil" class="accueil">
-  <h1 class="titre-accueil">JOYAUX D’ÉGYPTE</h1>
-  <button id="entrer" type="button">Entrer</button>
-</div>
-
 <main id="scene">
   <section id="gauche">
     <h1 class="titre">JOYAUX D’ÉGYPTE</h1>
@@ -21,8 +16,17 @@
     <div id="bulle" class="bulle" role="tooltip" hidden>
       <p class="bulle-nom"></p>
       <p class="bulle-lieu"></p>
-      <p class="bulle-accroche"></p>
+      <p class="bulle-texte"></p>
     </div>
+
+    <div class="zoom">
+      <button id="zoom-plus" type="button" aria-label="Zoomer">+</button>
+      <button id="zoom-moins" type="button" aria-label="Dézoomer">−</button>
+      <button id="zoom-reset" type="button" aria-label="Vue complète">⤢</button>
+    </div>
+    <button id="muet" class="muet" type="button" aria-pressed="false">Son</button>
+
+    <div id="reglette" aria-hidden="true"></div>
 
     <article id="fiche" class="fiche" hidden>
       <button class="fiche-fermer" type="button" aria-label="Fermer">×</button>
@@ -50,6 +54,7 @@
 <script src="js/vendor/flubber.min.js"></script>
 <script src="js/sons.js"></script>
 <script src="js/carte.js"></script>
+<script src="js/reglette.js"></script>
 <script src="js/collier.js"></script>
 <script src="js/app.js"></script>
 </body>
