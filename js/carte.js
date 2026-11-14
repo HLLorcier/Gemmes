@@ -225,17 +225,55 @@ const Carte = {
   // Construit le morphing ; retourne null si flubber n'est pas disponible
   construireMorph(g, dA, dB) {
     if (g.echelle) return null;
-    if (typeof flubber === 'undefined') {
-      console.error('flubber absent : morphing désactivé pour', g.id);
-      return null;
-    }
-    const f = flubber.interpolate(dA, dB, { maxSegmentLength: 6 });
+    const f = (typeof flubber !== 'undefined')
+      ? flubber.interpolate(dA, dB, { maxSegmentLength: 6 })
+      : this.morphIntegre(dA, dB);   // secours intégré, sans fichier externe
     // test : la fonction doit produire un tracé à mi-chemin
     if (typeof f(0.5) !== 'string' || f(0.5).length < 10 || typeof f(1) !== 'string') {
       console.error('morphing invalide pour', g.id);
       return null;
     }
     return f;
+  },
+
+  // Morphing intégré : échantillonne les deux contours, les aligne, puis interpole point à point
+  morphIntegre(dA, dB) {
+    const N = 120;
+    const echantillon = d => {
+      const p = document.createElementNS(NS, 'path');
+      p.setAttribute('d', d);
+      this.svg.appendChild(p);
+      const L = p.getTotalLength();
+      const pts = [];
+      for (let i = 0; i < N; i++) {
+        const q = p.getPointAtLength(L * i / N);
+        pts.push([q.x, q.y]);
+      }
+      p.remove();
+      return pts;
+    };
+    const A = echantillon(dA);
+    let B = echantillon(dB);
+    // décalage de départ de B qui colle le mieux à A
+    let meilleur = 0, meilleurScore = Infinity;
+    for (let s = 0; s < N; s++) {
+      let score = 0;
+      for (let i = 0; i < N; i += 6) {
+        const b = B[(i + s) % N];
+        score += Math.hypot(A[i][0] - b[0], A[i][1] - b[1]);
+      }
+      if (score < meilleurScore) { meilleurScore = score; meilleur = s; }
+    }
+    B = B.map((_, i) => B[(i + meilleur) % N]);
+    return t => {
+      let d = '';
+      for (let i = 0; i < N; i++) {
+        const x = A[i][0] + (B[i][0] - A[i][0]) * t;
+        const y = A[i][1] + (B[i][1] - A[i][1]) * t;
+        d += (i === 0 ? 'M' : 'L') + x.toFixed(2) + ' ' + y.toFixed(2) + ' ';
+      }
+      return d + 'Z';
+    };
   },
 
   // Centre d'un élément, transformé dans le repère racine de la carte
@@ -341,7 +379,7 @@ Object.assign(Carte, {
     return p.matrixTransform(this.svg.getScreenCTM().inverse());
   },
 
-  zoomActuel() { return this.largeur / this.vue.w; },
+  zoomActuel() { return this.vue ? this.largeur / this.vue.w : 1; },
 
   appliquerVue() {
     const v = this.vue;

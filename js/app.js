@@ -43,12 +43,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const lancer = () => {
     ambiance.play().catch(err => console.warn('Musique non lancée :', err));
   };
-  const son = document.getElementById('son');
-  son.addEventListener('click', () => {
-    ambiance.muted = !ambiance.muted;
-    son.setAttribute('aria-pressed', String(ambiance.muted));
-    son.textContent = ambiance.muted ? 'Son : off' : 'Son : on';
-  });
   const muet = document.getElementById('muet');
   muet.addEventListener('click', () => {
     ambiance.muted = !ambiance.muted;
