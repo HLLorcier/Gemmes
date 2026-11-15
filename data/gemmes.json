@@ -41,8 +41,8 @@
       "taille": 75,
       "morph": "flubber",
       "decalage": {
-        "dx": 0,
-        "dy": 0
+        "dx": 24,
+        "dy": 22
       }
     },
     {
